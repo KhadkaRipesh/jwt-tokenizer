@@ -1,6 +1,6 @@
 {
   "name": "jwt-tokenizer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A lightweight and customizable JWT toolkit built from scratch for eventual use in real backend applications.",
   "main": "index.ts",
   "scripts": {
