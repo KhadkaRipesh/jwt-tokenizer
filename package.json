@@ -1,0 +1,20 @@
+{
+  "name": "jwt-tokenizer",
+  "version": "1.0.0",
+  "description": "A lightweight and customizable JWT toolkit built from scratch for eventual use in real backend applications.",
+  "main": "index.ts",
+  "scripts": {
+    "dev": "ts-node playground.ts",
+    "build": "tsc"
+  },
+  "author": "ripesh.khadka",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.9",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^9.0.2"
+  }
+}
