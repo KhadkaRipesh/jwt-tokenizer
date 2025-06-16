@@ -1,15 +1,19 @@
 # jwt-tokenizer
 
-A lightweight and customizable JSON Web Token (JWT) toolkit built from scratch for educational use and real backend applications. It supports signing, verifying, and revoking both access and refresh tokens.
+A lightweight, class-based JWT utility with Redis support for token revocation.
+Built for Node.js environments to make token handling plug-and-play — with sensible defaults, full override flexibility, and optional revocation using Redis.
+
+    v2.0.0 is a complete upgrade from the function-based version, now powered by Singleton classes for better control and initialization safety.
 
 ---
 
 ## ✨ Features
 
-- 🔐 Sign and verify **access** and **refresh** tokens
-- ⚙️ Customizable token expiration and secrets
-- ❌ Simple in-memory **revocation** mechanism
-- 🛠️ Tiny and dependency-light (uses `jsonwebtoken` under the hood)
+- ✅ Simple JWT signing and verification
+- 🔄 Built-in refresh/access token support
+- 🔐 Optional token revocation using Redis
+- 🧱 Singleton-based, clean initialization
+- ⚙️ Easily extendable with custom options
 
 ---
 
@@ -17,101 +21,145 @@ A lightweight and customizable JSON Web Token (JWT) toolkit built from scratch f
 
 ```bash
 npm install jwt-tokenizer
+# or
+yarn add jwt-tokenizer
 ```
 
 ## 🚀 Usage
 
-### 1. Import the library and initialize it with your configuration (optional — defaults are provided):
+### 1. Initialize the tokenizer and redis:
 
 ```ts
-import {
-  initJwtTokenizer,
-  signToken,
-  verifyToken,
-  revokeToken,
-  isTokenRevoked,
-} from "jwt-tokenizer";
+import { JwtTokenizer, RedisClient } from "jwt-tokenizer";
 
-// 1. Initialize configuration (optional)
-initJwtTokenizer({
+const jwt = JwtTokenizer.getInstance();
+const redis = RedisClient.getInstance();
+
+jwt.init({
   accessSecret: "your-access-secret",
   refreshSecret: "your-refresh-secret",
   expiresIn: {
-    access: "15m",
-    refresh: "7d",
+    access: "10m",
+    refresh: "3d",
   },
 });
 
-// 2. Sign access and refresh tokens
-const accessToken = signToken({ userId: 123 }, "access");
-const refreshToken = signToken({ userId: 123 }, "refresh");
-
-// 3. Verify tokens
-try {
-  const payload = verifyToken(accessToken, "access");
-  console.log("Payload:", payload);
-} catch (err) {
-  console.error("Token verification failed:", err);
-}
-
-// 4. Revoke tokens
-revokeToken(accessToken);
-
-// 5. Check if token is revoked
-const revoked = isTokenRevoked(accessToken);
-console.log("Is token revoked?", revoked);
+redis.init({
+  host: "redis-host",
+  port: 6379,
+});
 ```
 
-## API Reference
+### 2. Sign a token:
 
-### `initJwtTokenizer(newConfig: Partial<TokenConfig>)`
+```ts
+const token = jwt.sign({ userId: 123 });
+console.log("Signed Token:", token);
+```
 
-Initialize or override JWT configuration.
+### 3. Verify a token:
 
-- `newConfig.accessSecret` — Secret key for access tokens.
-- `newConfig.refreshSecret` — Secret key for refresh tokens.
-- `newConfig.expiresIn.access` — Access token expiry time (e.g. `'15m'`).
-- `newConfig.expiresIn.refresh` — Refresh token expiry time (e.g. `'7d'`).
+```ts
+const payload = jwt.verify(token);
+console.log("Payload:", payload);
+```
+
+## 🔁 Token Revocation (Optional)
+
+### Revoke a Token
+
+```ts
+await jwt.revoke(token); // Stores it in Redis with TTL
+```
+
+### Check if a token is revoked
+
+```ts
+const isRevoked = await jwt.isRevoked(token);
+console.log("Revoked?", isRevoked);
+```
+
+## API Reference (v2.0.0)
+
+### `JwtTokenizer.getInstance().init(config: TokenConfig)`
+
+Initialize the JWT tokenizer with your config.
+
+- `accessSecret` — Secret key for access tokens.
+- `refreshSecret` — Secret key for refresh tokens.
+- `expiresIn.access` — Access token expiry time (e.g. `'15m'`).
+- `expiresIn.refresh` — Refresh token expiry time (e.g. `'7d'`).
+- `signOptions?` — Optional global jsonwebtoken sign options.
+- `verifyOptions?` — Optional global jsonwebtoken verify options.
 
 ---
 
-### `signToken(payload: object, type: "access" | "refresh" = "access"): string`
+### `JwtTokenizer.getInstance().sign(payload: object, type: "access" | "refresh" = "access", options?: SignOptions): string`
 
-Sign a JWT token with the specified payload and type.
+Generates and returns a signed JWT token.
 
 - `payload` — Data to encode in the token.
 - `type` — Token type, either `"access"` or `"refresh"`. Defaults to `"access"`.
+- `options?` — Optional override of default sign options.
 
 Returns a signed JWT string.
 
 ---
 
-### `verifyToken(token: string, type: "access" | "refresh" = "access"): object | string`
+### `JwtTokenizer.getInstance().verify(token: string, type: "access" | "refresh" = "access", options?: VerifyOptions): JwtPayload | string`
 
 Verify and decode a JWT token.
 
 - `token` — The JWT string to verify.
 - `type` — Token type. Defaults to `"access"`.
+- `options?` — Optional override of default verify options.
 
 Returns the decoded payload if valid; otherwise throws an error.
 
 ---
 
-### `revokeToken(token: string): void`
+### `JwtTokenizer.getInstance().revoke(token: string): Promise<void>`
 
 Revoke a token by adding it to an in-memory blacklist.
 
+- `token` — JWT string to revoke.
+
 ---
 
-### `isTokenRevoked(token: string): boolean`
+### `JwtTokenizer.getInstance().isRevoked(token: string): Promise<boolean>`
 
 Check if a token is revoked.
+
+- `token` — JWT string to check.
+
+---
+
+### `RedisClient.getInstance().init(config: RedisConfig)`
+
+Initialize the Redis client used for revocation.
+
+- `host` — Redis host.
+- `port` — Redis port.
+- `password` — Optional Redis password.
+
+---
+
+### `RedisClient.getInstance().getClient(): Redis`
+
+Returns the initialized ioredis client instance.
+
+---
+
+### `RedisClient.getInstance().quit(): Promise<void>`
+
+Gracefully closes the Redis connection.
 
 ---
 
 ## Important Notes
 
-- The token revocation feature stores revoked tokens **in memory** and **will not persist** after server restarts. For production, integrate with a persistent store like a database or Redis.
+- The token revocation feature requires Redis to be initialized. If Redis is not initialized, token signing and verification will still work normally, but revocation and revocation checks will be disabled.
+- Make sure to initialize Redis properly before using token revocation features to avoid runtime errors or unexpected behavior.
 - Keep your secret keys secure, random, and long enough to ensure safety.
 - Always handle exceptions when verifying tokens to avoid crashes.
 - This library is intended for backend use in Node.js environments.
@@ -133,4 +181,4 @@ ISC © Ripesh Khadka
 ## Author
 
 Ripesh Khadka
-Portfolio: [https://ripeshkhadka.com.np](https://ripeshkhadka.com.np)
+[https://ripeshkhadka.com.np](https://ripeshkhadka.com.np)
