@@ -34,7 +34,7 @@ import {
 
 // 1. Initialize configuration (optional)
 initJwtTokenizer({
-  accesSecret: "your-access-secret",
+  accessSecret: "your-access-secret",
   refreshSecret: "your-refresh-secret",
   expiresIn: {
     access: "15m",
@@ -68,7 +68,7 @@ console.log("Is token revoked?", revoked);
 
 Initialize or override JWT configuration.
 
-- `newConfig.accesSecret` — Secret key for access tokens.
+- `newConfig.accessSecret` — Secret key for access tokens.
 - `newConfig.refreshSecret` — Secret key for refresh tokens.
 - `newConfig.expiresIn.access` — Access token expiry time (e.g. `'15m'`).
 - `newConfig.expiresIn.refresh` — Refresh token expiry time (e.g. `'7d'`).
