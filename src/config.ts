@@ -1,5 +1,5 @@
 export type TokenConfig = {
-  accesSecret: string;
+  accessSecret: string;
   refreshSecret: string;
   expiresIn: {
     access: string;
@@ -9,7 +9,7 @@ export type TokenConfig = {
 
 // initial values (default config)
 export let jwtConfig: TokenConfig = {
-  accesSecret: "default-access-secret",
+  accessSecret: "default-access-secret",
   refreshSecret: "default-refresh-secret",
   expiresIn: {
     access: "15m",

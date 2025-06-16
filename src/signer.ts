@@ -8,7 +8,7 @@ export const signToken = (
   type: TokenType = "access"
 ): string => {
   const secret =
-    type === "access" ? jwtConfig.accesSecret : jwtConfig.refreshSecret;
+    type === "access" ? jwtConfig.accessSecret : jwtConfig.refreshSecret;
   const expiresIn = jwtConfig.expiresIn[type];
 
   return jwt.sign(payload, secret, { expiresIn } as jwt.SignOptions);
